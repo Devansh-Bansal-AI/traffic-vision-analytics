@@ -1,0 +1,5 @@
+{
+  "image_points": [[1000, 1500], [2900, 1500], [3700, 2160], [300, 2160]],
+  "world_points": [[0, 0], [20, 0], [20, 40], [0, 40]],
+  "notes": "Replace image_points with four road-plane corners from your actual camera view. Replace world_points with measured distances in metres. Do not claim real-world speed until these values are measured/calibrated."
+}
