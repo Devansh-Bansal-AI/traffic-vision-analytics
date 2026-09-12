@@ -29,12 +29,19 @@ class TrafficAnalyzer:
 
     def summary(self, calibrated=False):
         avg_speed = sum(self.speed_values) / len(self.speed_values) if self.speed_values else 0.0
+        avg_active = (
+            round(sum(self.active_counts) / len(self.active_counts), 2)
+            if self.active_counts
+            else 0.0
+        )
+        congestion = (
+            "Light" if avg_active < 4.0 else "Moderate" if avg_active < 10.0 else "Heavy"
+        )
         result = {
             "frames_processed": self.frames_processed,
             "unique_vehicle_tracks": len(self.track_ids),
-            "average_active_vehicles_per_frame": round(
-                sum(self.active_counts) / len(self.active_counts), 2
-            ) if self.active_counts else 0.0,
+            "average_active_vehicles_per_frame": avg_active,
+            "congestion_level": congestion,
             "total_vehicle_detections": self.total_detections,
             "vehicle_detections_by_class": dict(self.class_counts),
             "average_speed": round(avg_speed, 3),
@@ -42,4 +49,7 @@ class TrafficAnalyzer:
             "speed_unit": "m/s" if calibrated else "pixels/s",
             "speed_calibrated": calibrated,
         }
+        if calibrated:
+            result["average_speed_kmh"] = round(avg_speed * 3.6, 2)
+            result["maximum_speed_kmh"] = round(self.max_speed * 3.6, 2)
         return result

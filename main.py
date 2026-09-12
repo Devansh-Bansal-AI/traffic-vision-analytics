@@ -32,26 +32,47 @@ def parse_args():
     return p.parse_args()
 
 
+import sys
+
+
 def load_transformer(path):
     if not path:
         return None
-    with open(path, "r", encoding="utf-8") as f:
-        cfg = json.load(f)
-    return HomographyTransformer(cfg["image_points"], cfg["world_points"])
+    cal_path = Path(path)
+    if not cal_path.is_file():
+        print(f"Error: Calibration file not found: {path}", file=sys.stderr)
+        sys.exit(1)
+    try:
+        with open(cal_path, "r", encoding="utf-8") as f:
+            cfg = json.load(f)
+        if "image_points" not in cfg or "world_points" not in cfg:
+            raise ValueError("Calibration file must contain 'image_points' and 'world_points'")
+        return HomographyTransformer(cfg["image_points"], cfg["world_points"])
+    except Exception as exc:
+        print(f"Error reading calibration file: {exc}", file=sys.stderr)
+        sys.exit(1)
 
 
 def main():
     args = parse_args()
-    if not Path(args.input).is_file():
-        raise FileNotFoundError(f"Input video not found: {args.input}")
+    input_path = Path(args.input)
+    if not input_path.is_file():
+        print(f"Error: Input video file not found: {args.input}", file=sys.stderr)
+        sys.exit(1)
 
     out = Path(args.output_dir)
-    out.mkdir(parents=True, exist_ok=True)
+    try:
+        out.mkdir(parents=True, exist_ok=True)
+    except Exception as exc:
+        print(f"Error creating output directory {args.output_dir}: {exc}", file=sys.stderr)
+        sys.exit(1)
 
     import cv2
     cap = cv2.VideoCapture(args.input)
     if not cap.isOpened():
-        raise RuntimeError(f"Could not open video: {args.input}")
+        print(f"Error: OpenCV could not open video: {args.input}", file=sys.stderr)
+        sys.exit(1)
+
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -59,39 +80,52 @@ def main():
     cap.release()
 
     transformer = load_transformer(args.calibration)
-    detector = VehicleDetector(
-        backend=args.detector,
-        model_path=args.model,
-        confidence=args.conf,
-        image_size=args.imgsz,
-        device=args.device,
-        min_area=args.min_area,
-    )
+    try:
+        detector = VehicleDetector(
+            backend=args.detector,
+            model_path=args.model,
+            confidence=args.conf,
+            image_size=args.imgsz,
+            device=args.device,
+            min_area=args.min_area,
+        )
+    except Exception as exc:
+        print(f"Error initializing detector: {exc}", file=sys.stderr)
+        sys.exit(1)
+
     tracker = MultiObjectTracker(
         max_distance=args.max_distance,
         max_missed=args.max_missed,
         iou_threshold=args.iou_threshold,
     )
-    estimator = SpeedEstimator(fps=fps, transformer=transformer)
+    max_physical_speed = 38.0 if transformer else None
+    estimator = SpeedEstimator(fps=fps, transformer=transformer, max_speed=max_physical_speed)
     analyzer = TrafficAnalyzer(fps=fps)
     processor = VideoProcessor(detector, tracker, estimator, analyzer)
 
-    print("=" * 64)
-    print(" Intelligent Traffic Surveillance & Vehicle Analytics")
-    print("=" * 64)
-    print(f"Input       : {args.input}")
-    print(f"Resolution  : {width}x{height}")
-    print(f"FPS         : {fps:.2f}")
-    print(f"Frames      : {frame_count}")
-    print(f"Detector    : {args.detector}")
+    calib_status = (
+        f"ENABLED via {args.calibration} (Real-world physical speed in m/s & km/h)"
+        if transformer
+        else "NOT ENABLED (Displacement reported in pixels/s; use --calibration for km/h)"
+    )
+
+    print("=" * 68)
+    print("  INTELLIGENT TRAFFIC SURVEILLANCE & VEHICLE ANALYTICS (CSE3010)")
+    print("=" * 68)
+    print(f" Input Video : {args.input}")
+    print(f" Resolution  : {width}x{height}")
+    print(f" Native FPS  : {fps:.2f}")
+    print(f" Frames      : {frame_count}")
+    print(f" Mode        : Headless Command-Line Execution")
+    print(f" Detector    : {args.detector.upper()}")
     if args.detector == "yolo":
-        print(f"Model       : {args.model}")
-        print(f"Confidence  : {args.conf:.2f}")
-        print(f"Inference   : {args.imgsz}px on {args.device}")
-    print(f"Calibration : {'enabled' if transformer else 'not enabled (speed reported in pixels/s)'}")
-    print(f"Frame skip  : {args.skip}")
-    print("-" * 64)
-    print("Processing...\n")
+        print(f" Model       : {args.model}")
+        print(f" Confidence  : {args.conf:.2f}")
+        print(f" Inference   : {args.imgsz}px on {args.device}")
+    print(f" Calibration : {calib_status}")
+    print(f" Frame Skip  : {args.skip}")
+    print("-" * 68)
+    print("Processing pipeline started...\n")
 
     summary = processor.run(
         input_path=args.input,
@@ -103,10 +137,14 @@ def main():
         show=args.show,
     )
 
-    print("\nProcessing complete.")
+    print("\n" + "=" * 68)
+    print("  PIPELINE EXECUTION SUMMARY")
+    print("=" * 68)
     for k, v in summary.items():
-        print(f"{k}: {v}")
-    print(f"\nResults saved to: {out.resolve()}")
+        print(f"  {k:34s}: {v}")
+    print("-" * 68)
+    print(f"  All outputs generated successfully in: {out.resolve()}")
+    print("=" * 68)
 
 
 if __name__ == "__main__":

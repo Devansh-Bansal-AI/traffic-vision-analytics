@@ -35,7 +35,7 @@ class VideoProcessor:
             csv_writer = csv.writer(f)
             csv_writer.writerow([
                 "frame", "vehicle_id", "class", "confidence", "x", "y", "width", "height",
-                "speed", "speed_unit"
+                "speed", "speed_unit", "speed_kmh"
             ])
             frame_no = 0
             processed = 0
@@ -56,13 +56,14 @@ class VideoProcessor:
                             speeds[t.track_id] = self.estimator.update(t.track_id, t.centroid)
 
                     self.analyzer.update(tracks, speeds)
-                    counts = Counter(t.class_name for t in tracks if t.missed == 0)
+                    active_tracks = [t for t in tracks if t.missed == 0]
+                    counts = Counter(t.class_name for t in active_tracks)
 
                     calibrated = self.estimator.transformer is not None
                     annotated = draw_tracks(frame, tracks, speeds, calibrated)
                     annotated = draw_hud(
                         annotated, frame_no,
-                        sum(1 for t in tracks if t.missed == 0), counts, calibrated
+                        len(active_tracks), counts, calibrated
                     )
                     writer.write(annotated)
                     if show:
@@ -71,16 +72,22 @@ class VideoProcessor:
                             break
 
                     unit = "m/s" if calibrated else "pixels/s"
-                    for t in tracks:
-                        if t.missed == 0:
-                            x, y, w, h = t.bbox
-                            csv_writer.writerow([
-                                frame_no, t.track_id, t.class_name, f"{t.confidence:.4f}",
-                                t.centroid[0], t.centroid[1], w, h,
-                                f"{speeds.get(t.track_id, 0.0):.4f}", unit
-                            ])
+                    for t in active_tracks:
+                        x, y, w, h = t.bbox
+                        speed_val = speeds.get(t.track_id, 0.0)
+                        speed_kmh_str = f"{speed_val * 3.6:.2f}" if calibrated else "N/A"
+                        csv_writer.writerow([
+                            frame_no, t.track_id, t.class_name, f"{t.confidence:.4f}",
+                            t.centroid[0], t.centroid[1], w, h,
+                            f"{speed_val:.4f}", unit, speed_kmh_str
+                        ])
                     processed += 1
                     frame_no += 1
+
+                    if processed % 50 == 0 or (max_frames is not None and processed >= max_frames):
+                        target_str = f"/{max_frames}" if max_frames else ""
+                        print(f"  -> Processed {processed}{target_str} frames | Active vehicles: {len(active_tracks)}")
+
                     if max_frames is not None and processed >= max_frames:
                         break
             finally:

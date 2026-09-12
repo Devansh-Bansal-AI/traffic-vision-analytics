@@ -1,0 +1,22 @@
+{
+  "camera": "Fixed traffic surveillance camera (Chicago North Michigan Ave view)",
+  "resolution": "3840x2160",
+  "road_plane_description": "Road surface plane between near crosswalk and intersection stop line",
+  "image_points": [
+    [1450, 1450],
+    [2900, 1450],
+    [3500, 2160],
+    [600, 2160]
+  ],
+  "world_points": [
+    [0.0, 40.0],
+    [14.0, 40.0],
+    [14.0, 0.0],
+    [0.0, 0.0]
+  ],
+  "units": {
+    "world_coordinates": "metres",
+    "speed": "m/s and km/h"
+  },
+  "notes": "Planar homography transformation maps 2D camera pixels to metric ground-plane coordinates. Derived speeds reflect physical vehicle velocity."
+}
