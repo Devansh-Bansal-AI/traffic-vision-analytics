@@ -34,22 +34,24 @@ pip install -r requirements.txt
 
 ### 2. Run the Automated Test Suite
 
-Verify system integrity, homography transforms, tracker persistence, and metric calculations:
+Verify system integrity, homography transforms, tracker persistence, HCM Level of Service, and metric calculations:
 
 ```bash
-python -m pytest
+python -m pytest -v
 ```
-*Expected Output*: `10 passed in ~0.2s`
+*Expected Output*: `13 passed in ~0.2s`
 
-### 3. Primary Evaluation Command (Calibrated Physical Mode)
+### 3. Primary Evaluation Command (Strict Headless CLI Execution)
 
-Place a traffic video in `data/` (e.g. `data/traffic.mp4` or your local UHD file) and run the primary evaluation pipeline:
+Place your traffic video in `data/` (e.g. `data/18437773-uhd_3840_2160_50fps.mp4` or `data/traffic.mp4`) and run the headless pipeline:
 
 ```bash
-python main.py --input data/traffic.mp4 --calibration config/calibration.json --max-frames 300
+python main.py --input data/18437773-uhd_3840_2160_50fps.mp4 --max-frames 300
 ```
 
-> **Live Terminal Progress**: The processor prints periodic updates (`-> Processed 50/300 frames | Active vehicles: 8`) and outputs a clean execution summary upon completion.
+> **Zero Configuration Overhead**: The system automatically detects and loads `config/calibration.json` (or synthesizes a valid urban road geometry if missing). No manual configuration is required for evaluation.
+>
+> **Pure Headless Output**: No desktop windows (`cv2.imshow`) are spawned. Live progress is emitted to stdout (`[CLI Engine] Processed 50/300 frames | Active vehicles: 8`), and all artifacts are saved directly to `outputs/`.
 
 ---
 

@@ -5,6 +5,7 @@ from src.homography import HomographyTransformer
 from src.speed_estimator import SpeedEstimator
 from src.traffic_analyzer import TrafficAnalyzer
 from src.tracker import MultiObjectTracker, Track, iou
+from main import load_or_generate_transformer
 
 
 def test_iou_cases():
@@ -46,8 +47,7 @@ def test_calibrated_speed_estimator():
 
 
 def test_traffic_analyzer_congestion_and_calibrated():
-    analyzer = TrafficAnalyzer(fps=30.0)
-    # Add tracks for multiple frames to test active counts and congestion
+    analyzer = TrafficAnalyzer(fps=30.0, road_length_metres=40.0, num_lanes=4)
     tracks = [
         Track(1, (100, 100), (90, 90, 20, 20), "car", 0.9),
         Track(2, (200, 200), (190, 190, 20, 20), "bus", 0.85),
@@ -64,10 +64,44 @@ def test_traffic_analyzer_congestion_and_calibrated():
     assert summary["speed_unit"] == "m/s"
     assert "average_speed_kmh" in summary
     assert "maximum_speed_kmh" in summary
+    assert "level_of_service" in summary
+    assert "estimated_hourly_flow_rate_vph" in summary
     assert summary["average_speed_kmh"] == round(9.0 * 3.6, 2)
+
+
+def test_hcm_level_of_service():
+    analyzer = TrafficAnalyzer(fps=10.0, road_length_metres=50.0, num_lanes=2)
+    # Simulate free-flow traffic
+    tracks_light = [Track(i, (100 * i, 100), (90 * i, 90, 20, 20), "car", 0.9) for i in range(1, 3)]
+    analyzer.update(tracks_light, {1: 15.0, 2: 14.0})
+    s = analyzer.summary(calibrated=True)
+    assert "LOS" in s["level_of_service"]
+    assert s["traffic_density_veh_per_lane_km"] > 0.0
+
+
+def test_speed_percentiles():
+    analyzer = TrafficAnalyzer(fps=30.0)
+    for spd in [5.0, 10.0, 15.0, 20.0, 25.0]:
+        t = [Track(1, (10, 10), (0, 0, 10, 10), "car", 0.9)]
+        analyzer.update(t, {1: spd})
+    s = analyzer.summary(calibrated=True)
+    assert s["speed_percentile_15"] > 0.0
+    assert s["speed_percentile_85"] >= s["speed_percentile_15"]
+    assert s["speed_percentile_85_kmh"] == round(s["speed_percentile_85"] * 3.6, 2)
 
 
 def test_mog2_detector_initialization():
     detector = VehicleDetector(backend="mog2", min_area=500)
     assert detector.backend == "mog2"
     assert detector.bg is not None
+
+
+def test_configuration_fallback_resilience():
+    # Verify that requesting a non-existent calibration file never crashes and falls back cleanly
+    transformer, status = load_or_generate_transformer(
+        path="config/non_existent_random_path_12345.json",
+        width=1920,
+        height=1080,
+    )
+    assert transformer is not None
+    assert "ACTIVE" in status or "FALLBACK" in status

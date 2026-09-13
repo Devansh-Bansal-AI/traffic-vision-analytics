@@ -190,9 +190,12 @@ python -m pytest
 7. `test_calibrated_speed_estimator`: Validates physical metric speed conversion from known geometric landmark coordinates.
 8. `test_summary`: Validates statistical dictionary generation in `TrafficAnalyzer`.
 9. `test_traffic_analyzer_congestion_and_calibrated`: Validates multi-vehicle aggregation, congestion indexing, and $\text{km/h}$ metric conversion.
-10. `test_mog2_detector_initialization`: Validates initialization and kernel configuration of the classical MOG2 baseline.
+10. `test_hcm_level_of_service`: Validates Highway Capacity Manual (HCM) Level of Service (LOS A–F) determination based on vehicular density and speed.
+11. `test_speed_percentiles`: Asserts mathematical correctness of 85th-percentile ($V_{85}$) and 15th-percentile ($V_{15}$) operating speed calculations.
+12. `test_mog2_detector_initialization`: Validates initialization and kernel configuration of the classical MOG2 baseline.
+13. `test_configuration_fallback_resilience`: Validates that non-existent calibration files automatically fall back cleanly without terminating execution.
 
-**Result**: `10 passed in 0.18s` (100% test pass rate).
+**Result**: `13 passed in 0.11s` (100% test pass rate).
 
 ---
 

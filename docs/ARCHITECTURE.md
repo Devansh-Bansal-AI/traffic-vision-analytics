@@ -111,13 +111,15 @@ The architecture is explicitly decoupled into independent functional units adher
   - If uncalibrated, $d$ represents pixel displacement, and speed is strictly tagged as `pixels/s`.
 
 ### 2.6 TrafficAnalyzer (`src/traffic_analyzer.py`)
-- **Role**: Statistical aggregation and traffic flow indexing.
+- **Role**: Statistical aggregation, kinematic distribution, and transportation engineering analysis.
 - **Metrics Computed**:
-  - Total frame count and unique vehicle track count.
-  - Frame-average active vehicle occupancy.
-  - Categorical distribution across vehicle classes (`car`, `bus`, `truck`, `motorcycle`).
-  - Mean and peak velocity across all vehicles.
-  - Congestion Level indexing: classified into `Light`, `Moderate`, or `Heavy` based on active lane saturation.
+  - **Highway Capacity Manual (HCM) Level of Service (LOS)**: Evaluates road operating conditions (LOS A through F) derived from physical vehicle density per lane-kilometer and operating speed.
+  - **Estimated Hourly Flow Rate ($Q$)**: Extrapolates observed vehicle throughput to standard vehicles-per-hour ($\text{vph}$) equivalent.
+  - **85th-Percentile Operating Velocity ($V_{85}$)**: The fundamental metric used by transportation engineers worldwide to assess speed compliance and design consistency.
+  - **15th-Percentile Velocity ($V_{15}$)**: Lower-tail distribution identifying impeded or slow-moving vehicles.
+  - **Speed Dispersion**: Measures standard deviation ($\sigma_v$) and Coefficient of Variation ($CV = \sigma_v / \mu_v$) to characterize turbulence in the traffic stream.
+  - **Fleet Modal Split**: Quantifies proportional volume of passenger cars vs. heavy commercial transport (buses, trucks) alongside the Heavy Vehicle Percentage ($P_{HV}$).
+  - **Congestion Level**: Qualitative traffic density index (`Light`, `Moderate`, `Heavy`).
 
 ### 2.7 Visualizer (`src/visualizer.py`)
 - **Role**: Dynamic graphical overlay and heads-up display (HUD).
@@ -161,15 +163,27 @@ The architecture is explicitly decoupled into independent functional units adher
   "frames_processed": 300,
   "unique_vehicle_tracks": 29,
   "average_active_vehicles_per_frame": 7.62,
+  "peak_active_vehicles": 10,
+  "traffic_density_veh_per_lane_km": 43.87,
+  "level_of_service": "LOS F (Forced/Breakdown Flow - Heavy congestion)",
   "congestion_level": "Moderate",
+  "estimated_hourly_flow_rate_vph": 27000,
   "total_vehicle_detections": 2285,
   "vehicle_detections_by_class": { "car": 1915, "bus": 351, "truck": 19 },
-  "average_speed": 10.42,
-  "maximum_speed": 18.85,
-  "average_speed_kmh": 37.51,
-  "maximum_speed_kmh": 67.86,
+  "fleet_modal_split_percentage": { "car": 83.8, "bus": 15.4, "truck": 0.8 },
+  "heavy_vehicle_percentage": 16.2,
+  "average_speed": 9.084,
+  "maximum_speed": 37.552,
+  "speed_std_dev": 7.587,
+  "speed_coeff_variation": 1.01,
+  "speed_percentile_15": 1.138,
+  "speed_percentile_85": 15.213,
   "speed_unit": "m/s",
   "speed_calibrated": true,
+  "average_speed_kmh": 32.70,
+  "maximum_speed_kmh": 135.19,
+  "speed_percentile_85_kmh": 54.77,
+  "speed_percentile_15_kmh": 4.10,
   "input_resolution": "3840x2160",
   "video_fps": 50.0,
   "output_video": "outputs/annotated_video.mp4"
