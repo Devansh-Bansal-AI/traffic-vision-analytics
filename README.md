@@ -175,14 +175,17 @@ Run the complete test suite with verbose reporting:
 python -m pytest -v
 ```
 
-All 10 unit and integration tests validate:
+- All 13 unit and integration tests validate:
 - Bounding-box IoU computation (boundary, overlap, and non-overlap cases).
 - Tracker persistence across temporal sequence frames.
 - Detection dataclass integrity and schema compatibility.
 - Planar homography coordinate transformations.
 - Calibrated $\text{m/s} \to \text{km/h}$ metric speed conversion.
 - Congestion level and statistical aggregation in `TrafficAnalyzer`.
+- Highway Capacity Manual (HCM) Level of Service (LOS A–F) evaluation.
+- Operating speed percentiles ($V_{85}$, $V_{15}$) computation.
 - MOG2 background subtractor initialization and morphological filtering.
+- Configuration file fallback and dynamic road geometry synthesis resilience.
 
 ---
 
@@ -213,6 +216,8 @@ traffic-vision-analytics/
 │   ├── test_pipeline_integration.py # End-to-end integration & calibrated tests
 │   ├── test_speed.py            # Speed calculation unit tests
 │   └── test_tracker.py          # Tracking & IoU unit tests
+├── scripts/
+│   └── generate_pdf_report.py   # Automated 15-section PDF report compiler
 ├── data/
 │   ├── .gitkeep
 │   └── README.md                # Video placement guide (large videos excluded from Git)
@@ -222,15 +227,17 @@ traffic-vision-analytics/
 │   ├── ARCHITECTURE.md          # Full architectural & mathematical specification
 │   └── demo_preview.jpg         # Sample annotated detection visual
 └── report/
-    └── PROJECT_REPORT.md        # Comprehensive academic project report
+    ├── PROJECT_REPORT.md        # Comprehensive 15-section academic project report
+    └── PROJECT_REPORT.pdf       # Compiled submission-ready PDF project report
 ```
 
 ---
 
 ## 📄 Key Documentation Links
 
+- **Compiled PDF Project Report (Portal Ready)**: [report/PROJECT_REPORT.pdf](report/PROJECT_REPORT.pdf)
+- **Academic Project Report (Markdown)**: [report/PROJECT_REPORT.md](report/PROJECT_REPORT.md)
 - **System Architecture & Math**: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- **Academic Project Report**: [report/PROJECT_REPORT.md](report/PROJECT_REPORT.md)
 - **Project Problem Statement**: [statement.md](statement.md)
 - **Calibration Geometry**: [config/calibration.json](config/calibration.json)
 
